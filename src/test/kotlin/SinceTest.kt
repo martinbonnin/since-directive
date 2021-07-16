@@ -56,39 +56,6 @@ const val SUCCESSFUL_ISSUE_RESPONSE = """
 """
 
 class SinceTest {
-  private fun apolloClient(serverUrl: String, serverVersion: Int): ApolloClient {
-    return ApolloClient(
-      HttpNetworkTransport(
-        httpRequestComposer = VersionAwareRequestComposer(
-          endpoint = serverUrl, // "https://api.github.com/graphql",
-          serverVersion = serverVersion
-        ),
-        interceptors = listOf(object : HttpInterceptor {
-          override suspend fun intercept(request: HttpRequest, chain: HttpInterceptorChain): HttpResponse {
-            val token = try {
-              File("github_token").readText().trim()
-            } catch (e: Exception) {
-              // Since these tests use MockServer, there's no real need to send a token
-              "unused"
-            }
-            val newRequest = request.copy(
-              headers = request.headers + ("Authorization" to "bearer $token")
-            )
-            return chain.proceed(newRequest)
-          }
-
-        }),
-        engine = DefaultHttpEngine()
-      )
-    )
-  }
-
-  private suspend fun ensureNotLocked(apolloClient: ApolloClient) {
-    kotlin.runCatching {
-      apolloClient.mutate(UnlockLockableMutation(id = TEST_DISCUSSION_ID))
-    }
-  }
-
   /**
    * V4 has Discussion, so we can lock it \o/
    */
@@ -137,5 +104,38 @@ class SinceTest {
     // And make sure the request body doesn't mention "Discussion"
     val recordedRequest = mockServer.takeRequest()
     assertFalse(recordedRequest.body.readUtf8().contains("Discussion"))
+  }
+
+  private fun apolloClient(serverUrl: String, serverVersion: Int): ApolloClient {
+    return ApolloClient(
+      HttpNetworkTransport(
+        httpRequestComposer = VersionAwareRequestComposer(
+          endpoint = serverUrl, // "https://api.github.com/graphql",
+          serverVersion = serverVersion
+        ),
+        interceptors = listOf(object : HttpInterceptor {
+          override suspend fun intercept(request: HttpRequest, chain: HttpInterceptorChain): HttpResponse {
+            val token = try {
+              File("github_token").readText().trim()
+            } catch (e: Exception) {
+              // Since these tests use MockServer, there's no real need to send a token
+              "unused"
+            }
+            val newRequest = request.copy(
+              headers = request.headers + ("Authorization" to "bearer $token")
+            )
+            return chain.proceed(newRequest)
+          }
+
+        }),
+        engine = DefaultHttpEngine()
+      )
+    )
+  }
+
+  private suspend fun ensureNotLocked(apolloClient: ApolloClient) {
+    kotlin.runCatching {
+      apolloClient.mutate(UnlockLockableMutation(id = TEST_DISCUSSION_ID))
+    }
   }
 }
