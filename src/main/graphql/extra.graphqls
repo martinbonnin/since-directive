@@ -1,0 +1,4 @@
+"""
+Marks a selection only available starting with a given version
+"""
+directive @since(version: Int!) on FIELD | INLINE_FRAGMENT | FRAGMENT_SPREAD

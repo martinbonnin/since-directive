@@ -1,0 +1,33 @@
+mutation LockLockable($id: ID!) {
+  lockLockable(input: {lockableId: $id}) {
+    actor {
+        login
+    }
+    lockedRecord {
+        activeLockReason
+        ... LockableFragment
+    }
+  }
+}
+
+fragment LockableFragment on Lockable{
+  __typename
+  locked
+  ... on PullRequest {
+    id
+  }
+  ... on Issue {
+    id
+  }
+  ... on Discussion @since(version: 4) {
+    id
+  }
+}
+
+mutation UnlockLockable($id: ID!) {
+  unlockLockable(input: {lockableId: $id}) {
+    actor {
+      login
+    }
+  }
+}
